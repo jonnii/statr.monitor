@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Timers;
 using Castle.Core.Logging;
+using Statr.Client;
 
 namespace Statr.Monitor
 {
@@ -11,9 +12,13 @@ namespace Statr.Monitor
 
         private PerformanceCounter performanceCounter;
 
+        private readonly IStatrClient client;
+
         public Collector()
         {
             Logger = NullLogger.Instance;
+
+            client = new StatrClient("localhost");
             InitializePerformanceCounter();
         }
 
@@ -47,7 +52,7 @@ namespace Statr.Monitor
         private void TimerOnElapsed(object sender, ElapsedEventArgs elapsedEventArgs)
         {
             var tick = performanceCounter.NextValue();
-            // raise event to statr here...
+            client.Gauge("stats.cpu.processor.time.total", tick);
         }
 
         public void Dispose()
@@ -58,6 +63,11 @@ namespace Statr.Monitor
             {
                 timer.Stop();
                 timer.Dispose();
+            }
+
+            if (client != null)
+            {
+                client.Dispose();
             }
         }
     }
